@@ -13,18 +13,18 @@ import Data.Ord      (comparing)
 import Data.Function (on)
 import Control.Monad (liftM, guard)
 import Data.Hashable (Hashable, hashWithSalt, hash)
+import Control.DeepSeq (deepseq, NFData(..))
 import qualified Data.HashSet as S 
    (HashSet, fromList, filter, toList, union, empty, unions, 
     difference, map, size, singleton, null, foldr, delete)
 import qualified Data.HashMap.Strict as M 
-   (HashMap, empty, insertWith, fromListWith, filter, fromList, lookup, toList)
+   (HashMap, empty, null, insertWith, fromListWith, filter, fromList, lookup, toList)
 import qualified Data.Vector.Unboxed as V 
    ((//), sum, toList, all, fromList, Vector, zipWith, length, map, update, 
    (!), empty, replicate, elemIndex, elemIndices, (++), cons, zip,
    enumFromN, unfoldr, drop, take, singleton, Unbox, accumulate)
 import Data.Bits ((.&.), (.|.), xor, shiftR, shiftL)
 import Data.Word (Word16)
-import Control.DeepSeq (deepseq, NFData(..))
 import Control.Parallel.Strategies (rdeepseq, parBuffer, withStrategy, parList)
 import Control.Arrow ((***))
 -- Testing libraries --
@@ -623,8 +623,8 @@ cmplxCornerUpdate cx (x,c) = (cvs, newTops, notTops)
                     cmplxCornersNaive . cmplxAddCells delNhd $ newTops 
 
 -- | Given a cubical complex all of whose vertices have nonzero coordiantes
---   and a list of corner vertex/cell pairs to delete, determine if these
---   updates can be done in parallel, and if so describe the update 
+--   and a list of corner vertex/cell pairs to delete (one corner per cell), 
+--   determine if these updates can be done in parallel, and if so describe the update 
 cmplxCornerUpdates :: CubeCmplx
                       -> [(Vertex, CubeCell)] -- list of corners to process
                       -> Maybe (S.HashSet (Vertex, CubeCell), -- new corners
@@ -636,7 +636,9 @@ cmplxCornerUpdates cx xss = if paraPoss
    where updates    = withStrategy (parBuffer 100 rdeepseq) $
                       map (cmplxCornerUpdate cx) xss
          (xs,cs,os) = unzip3 updates
-         paraPoss   = (sum . map S.size $ os) == S.size (S.unions os)
+         paraPoss   = M.null . M.filter (>= 2) . M.fromListWith (+) $ 
+                      zip (concatMap (verts . snd) xss) (repeat 1)
+                      --(sum . map S.size $ os) == S.size (S.unions os)
 
 -- | Given a set of (vertex,cell) pairs, return a maximal subset such that 
 --   every cell occurs in at most one pair
@@ -700,31 +702,22 @@ cmplxReduceSerial cx xs vs
 --   iteratively reduce the complex until there are no known non-excluded corner 
 --   vertices remaining 
 --cmplxReduce :: CubeCmplx -> S.HashSet (Vertex, CubeCell) -> [Vertex] -> CubeCmplx
-cmplxReduce cx xs vs = iterate go (cx,xs,vs)
-   where go (cx,xs,vs) = (cx', xs' `S.union` S.fromList rest `S.union` xsl, vs)
-            where (cx',xs') = cmplxCornersDelPar vs (cx, S.fromList cs)
-                  cornList  = S.toList $ S.filter (\(_,c) -> cellDim c /= 0) xs  
-                  (cs,rs)   = splitAt 8 cornList 
-                  rest      = filter (\(v,c) -> not (v `elem` (map fst $ S.toList xs') ||
-                                                     v `elem` (map fst cs) ||
-                                                     c `elem` (map snd $ S.toList xs') || --maybe doesn't happen
-                                                     c `elem` (map snd cs))
-                                                    ) $ rs
-                  xsl       = if S.null (xs' `S.union` S.fromList rest) 
-                              then cmplxCornersNaive cx'
-                              else S.empty
+cmplxReduce chunkSize cx xs vs = iterate go (cx,xs,vs)
+   where go (cx,xs,vs) = (cx',xsl,vs)
+            where cornList     = S.fromList . take chunkSize . S.toList $ 
+                                 S.filter (\(_,c) -> cellDim c /= 0) xs 
+                  (cx',xs')    = cmplxCornersDelPar vs (cx, cornList)
+                  xsl          = if S.null xs' then cmplxCornersNaive cx' else xs'
 
---cx = vsCmplx $ vsCoordsUnsafe (replicate 5 1) (replicate 5 5)
---cx = vsCmplx $ vsCoordsUnsafe [1,1] [4,4]
---cx = vsCmplx $ vsCoordsUnsafe [1,1] [3,2]
+--cx = cmplxAddCells cmplxEmpty $ 
+--     S.fromList [cellUnsafe [2,1,1] [2,2,1],
+--                 cellUnsafe [1,2,1] [2,2,2],
+--                 cellUnsafe [1,2,1] [1,3,1]]
 
---cx = vsCmplx $ vsCoordsUnsafe (replicate 3 1) (replicate 3 5)
-cx = vsCmplx $ vsCoordsUnsafe (replicate 3 1) (replicate 3 5)
-
-
+cx = vsCmplx $ vsCoordsUnsafe (replicate 4 1) (replicate 4 10)
 xs = cmplxCornersNaive $ cx
 
-main = print $ head $ drop 5000 $ cx `deepseq` xs `deepseq` cmplxReduce cx xs []
+main = print $ head $ drop 1000 $ cx `deepseq` xs `deepseq` cmplxReduce 20 cx xs []
 
 
 -- | Standard example of finite directed cubical complex: two classes of
