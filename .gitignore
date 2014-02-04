@@ -13,3 +13,4 @@ cabal.config
 *.eventlog
 *.prof
 tags
+Cubical
