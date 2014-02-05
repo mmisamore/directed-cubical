@@ -25,6 +25,7 @@ import qualified Data.Vector.Unboxed as V
    enumFromN, unfoldr, drop, take, singleton, Unbox, accumulate)
 import Data.Bits ((.&.), (.|.), xor, shiftR, shiftL)
 import Data.Word (Word16)
+import Data.List.Split (chunksOf)
 import Control.Parallel.Strategies (rdeepseq, parBuffer, withStrategy, parListChunk, rseq)
 import Control.Arrow ((***))
 -- Testing libraries --
@@ -672,7 +673,8 @@ cmplxCornerUpdates ::
 cmplxCornerUpdates cx xss = if paraPoss 
                             then Just (S.unions xs, S.unions cs, S.unions os)
                             else Nothing 
-   where updates    = map (cmplxCornerUpdate cx) xss
+   where updates    = -- add strategy?
+                      map (cmplxCornerUpdate cx) xss
          (xs,cs,os) = unzip3 updates
          paraPoss   = M.null . M.filter (>= 2) . M.fromListWith (+) $ 
                       zip (concatMap (verts . snd) xss) (repeat 1)
@@ -718,10 +720,12 @@ cmplxReduce chunkSize cx xs vs
 --                 cellUnsafe [1,2,1] [2,2,2],
 --                 cellUnsafe [1,2,1] [1,3,1]]
 
-cx = vsCmplx $ vsCoordsUnsafe (replicate 4 1) (replicate 4 9)
+cx = vsCmplx $ vsCoordsUnsafe (replicate 5 1) (replicate 5 5)
 xs = cmplxCornersNaive cx
 
-main = print $ cx `deepseq` xs `deepseq` cmplxReduce 50 cx xs []
+main = print $ cx `deepseq` xs `deepseq` 
+       cmplxReduce 2 cx xs [vertexUnsafe $ replicate 5 1,
+                            vertexUnsafe $ replicate 5 5] 
 --main = print $ cx `deepseq` xs `deepseq` cmplxReduceSerial cx xs []
 
 
