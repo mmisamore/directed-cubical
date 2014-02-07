@@ -21,12 +21,11 @@ import qualified Data.HashMap.Strict as M
    (HashMap, empty, null, insertWith, fromListWith, filter, fromList, lookup, toList)
 import qualified Data.Vector.Unboxed as V 
    ((//), sum, toList, all, fromList, Vector, zipWith, length, map, update, 
-   (!), empty, replicate, elemIndex, elemIndices, (++), cons, zip,
-   enumFromN, unfoldr, drop, take, singleton, Unbox, accumulate)
-import Data.Bits ((.&.), (.|.), xor, shiftR, shiftL)
-import Data.Word (Word16)
-import Data.List.Split (chunksOf)
-import Control.Parallel.Strategies (rdeepseq, parBuffer, withStrategy, parListChunk, rseq)
+   (!), replicate, elemIndex, elemIndices, (++), zip, enumFromN, drop, take, 
+   singleton, Unbox, accumulate)
+import Data.Bits ((.&.), (.|.), xor)
+import Control.Parallel.Strategies (rdeepseq, parBuffer, withStrategy, 
+                                    parListChunk)
 import Control.Arrow ((***))
 -- Testing libraries --
 import Test.QuickCheck (Arbitrary, arbitrary, suchThat, choose, vectorOf, resize) 
@@ -39,17 +38,6 @@ lazyProd []  = [[]]
 lazyProd [x] = map (:[]) x
 lazyProd (x1:x2:xs) = concat . concat $
                       [[[y1:y2:yn | y1<-x1] | y2<-x2] | yn <- (lazyProd xs)]
-
--- | Given a Word16, unpack it to a vector of bits in msb..lsb order 
-unpackWord16 :: Word16 -> V.Vector Int 
-unpackWord16 w = V.map fromEnum . fst $ foldr step (V.empty, w) [15,14..0]
-   where step _ (v,w) = ((w .&. 1) `V.cons` v, w `shiftR` 1)
-
--- | Given a vector of 16 bits in msb..lsb order, pack it into a Word16 
-packWord16Unsafe :: V.Vector Int -> Word16
-packWord16Unsafe v = V.sum $ V.zipWith (*) (V.map toEnum v) ps 
-ps = V.unfoldr (\n -> if n == 0 then Nothing 
-                else Just (n, n `shiftR` 1)) (1 `shiftL` 15 :: Word16)
 
 -- | Given a vector of n bits, a bitmask with k bits for n ambient coordinates,
 --   and a vector f of k bits to add, fill in the vector along the bitmask with 
@@ -710,15 +698,12 @@ cmplxReduce :: Int -> CubeCmplx
 cmplxReduce chunkSize cx xs vs 
    | xsl == xs = cx
    | otherwise = cmplxReduce chunkSize cx' xsl vs
-   where cornList  = S.fromList . take chunkSize . S.toList $ 
-                     S.filter (\(_,c) -> cellDim c /= 0) xs 
+   where cornList  = S.fromList . take chunkSize . S.toList $
+                     S.filter (\(v,c) -> (cellDim c /= 0) && 
+                                          not (v `elem` vs)) xs 
          (cx',xs') = cmplxCornersDelPar vs (cx, cornList)
          xsl       = if S.null xs' then cmplxCornersNaive cx' else xs'
 
---cx = cmplxAddCells cmplxEmpty $ 
---     S.fromList [cellUnsafe [2,1,1] [2,2,1],
---                 cellUnsafe [1,2,1] [2,2,2],
---                 cellUnsafe [1,2,1] [1,3,1]]
 
 cx = vsCmplx $ vsCoordsUnsafe (replicate 5 1) (replicate 5 5)
 xs = cmplxCornersNaive cx
@@ -726,7 +711,6 @@ xs = cmplxCornersNaive cx
 main = print $ cx `deepseq` xs `deepseq` 
        cmplxReduce 2 cx xs [vertexUnsafe $ replicate 5 1,
                             vertexUnsafe $ replicate 5 5] 
---main = print $ cx `deepseq` xs `deepseq` cmplxReduceSerial cx xs []
 
 
 -- | Standard example of finite directed cubical complex: two classes of
