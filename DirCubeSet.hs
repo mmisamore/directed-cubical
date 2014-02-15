@@ -799,37 +799,39 @@ cmplxReducePar cx vs = fst . head . dropWhile (\(c,d) -> c /= d) $
                        zip rcx (tail rcx) 
    where rcx = cmplxReducePar' cx vs 
 
-cx = vsCmplx $ vsCoordsUnsafe (replicate 5 1) (replicate 5 6)
-vs = [vsVert $ vertexUnsafe (replicate 5 1), vsVert $ vertexUnsafe (replicate 5 6)] 
---vs = []
 
-main = cx `deepseq` (print $ cmplxReducePar cx vs)
 
 -- | Standard example of finite directed cubical complex: two classes of
 --   paths expected in path category
-swissFlag :: CubeCmplx
-swissFlag = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1] [6,6]) $
-            S.fromList $ [cellUnsafe [2,3] [3,4], cellUnsafe [3,2] [4,3],
-                          cellUnsafe [3,3] [4,4], cellUnsafe [4,3] [5,4],
-                          cellUnsafe [3,4] [4,5]]
-
+swissFlag :: (CubeCmplx, [VertSpan])
+swissFlag = (cx, [vsVert $ vertexUnsafe [1,1], vsVert $ vertexUnsafe [6,6]]) 
+   where cx = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1] [6,6]) $
+              S.fromList $ [cellUnsafe [2,3] [3,4], cellUnsafe [3,2] [4,3],
+                            cellUnsafe [3,3] [4,4], cellUnsafe [4,3] [5,4],
+                            cellUnsafe [3,4] [4,5]]
+             
 -- | Standard example: four classes of paths expected in path category
-sqPairFwd :: CubeCmplx
-sqPairFwd = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1] [6,6]) $
-            S.fromList $ [cellUnsafe [2,2] [3,3], cellUnsafe [4,4] [5,5]]
+sqPairFwd :: (CubeCmplx, [VertSpan])
+sqPairFwd = (cx, [vsVert $ vertexUnsafe [1,1], vsVert $ vertexUnsafe [6,6]])
+   where cx = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1] [6,6]) $
+              S.fromList $ [cellUnsafe [2,2] [3,3], cellUnsafe [4,4] [5,5]]
 
 -- | Standard example: three classes of paths expected in path category
-sqPairBack :: CubeCmplx
-sqPairBack = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1] [6,6]) $
-             S.fromList $ [cellUnsafe [2,4] [3,5], cellUnsafe [4,2] [5,3]]
+sqPairBack :: (CubeCmplx, [VertSpan])
+sqPairBack = (cx, [vsVert $ vertexUnsafe [1,1], vsVert $ vertexUnsafe [6,6]])
+   where cx = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1] [6,6]) $
+              S.fromList $ [cellUnsafe [2,4] [3,5], cellUnsafe [4,2] [5,3]]
 
 -- | Standard example: two classes of paths expected in path category
-oneTorus3d :: CubeCmplx
-oneTorus3d = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1,1] [4,4,2]) $
-             S.fromList $ [cellUnsafe [2,2,1] [3,3,2]]
+oneTorus3d :: (CubeCmplx, [VertSpan])
+oneTorus3d = (cx, [vsVert $ vertexUnsafe [1,1,1], vsVert $ vertexUnsafe [4,4,2]])
+   where cx = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1,1] [4,4,2]) $
+              S.fromList $ [cellUnsafe [2,2,1] [3,3,2]]
 
 -- | Standard example: three classes of paths expected in path category
-twoTorus3d = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1,1] [4,6,2]) $
-             S.fromList $ [cellUnsafe [2,2,1] [3,3,2], 
-                           cellUnsafe [2,4,1] [3,5,2]]
+twoTorus3d :: (CubeCmplx, [VertSpan])
+twoTorus3d = (cx, [vsVert $ vertexUnsafe [1,1,1], vsVert $ vertexUnsafe [4,6,2]]) 
+   where cx = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1,1] [4,6,2]) $
+              S.fromList $ [cellUnsafe [2,2,1] [3,3,2], 
+                            cellUnsafe [2,4,1] [3,5,2]]
 
