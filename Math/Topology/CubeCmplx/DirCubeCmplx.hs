@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE BangPatterns #-}
 
--- | Module    :  Math.Topology.DirCubeCmplx
+-- | Module    :  Math.Topology.CubeCmplx.DirCubeCmplx
 -- Copyright   :  2014 Michael Misamore 
 -- License     :  BSD-style
 -- Maintainer  :  m.misamore@gmail.com 
@@ -10,7 +10,7 @@
 --
 -- Finite directed cubical complexes
 
-module DirCubeCmplx (
+module Math.Topology.CubeCmplx.DirCubeCmplx (
 
    -- * Vertices
    T, Vertex, vertex, coords, vertexUnsafe, vertexVectorUnsafe, vertexToList, 

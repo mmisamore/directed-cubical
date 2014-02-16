@@ -1,7 +1,7 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE BangPatterns #-}
 
--- | Module    :  Math.Topology.DirCubeCmplx.CornerReduce
+-- | Module    :  Math.Topology.CubeCmplx.CornerReduce
 -- Copyright   :  2014 Michael Misamore 
 -- License     :  BSD-style
 -- Maintainer  :  m.misamore@gmail.com 
@@ -11,7 +11,7 @@
 -- Algorithms for simplifying finite directed cubical complexes up to directed
 -- homotopy equivalence by removing corner vertices
 
-module Math.Topology.DirCubeCmplx.CornerReduce (
+module Math.Topology.CubeCmplx.CornerReduce (
 
    -- * Finding corners
    cmplxCornersNaive, cmplxSpanIntCorners, cmplxCorners, cmplxCornersInt,
@@ -38,7 +38,7 @@ import qualified Data.HashMap.Strict as M
 import Control.Parallel.Strategies 
    (rdeepseq, parBuffer, withStrategy, parList, dot, evalTuple3, r0)
 import Control.Arrow ((***))
-import DirCubeCmplx
+import Math.Topology.CubeCmplx.DirCubeCmplx
 
 -- | Naive algorithm for finding corner vertices of a cubical complex. Works
 --   well whenever the complex is small
