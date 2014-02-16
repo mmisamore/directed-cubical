@@ -13,5 +13,4 @@ cabal.config
 *.eventlog
 *.prof
 tags
-DirCubeSet
 
