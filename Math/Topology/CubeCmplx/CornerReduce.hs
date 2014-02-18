@@ -8,8 +8,9 @@
 -- Stability   :  experimental 
 -- Portability :  portable
 --
--- Algorithms for simplifying finite directed cubical complexes up to directed
--- homotopy equivalence by removing corner vertices
+-- Algorithms for simplifying finite directed cubical complexes by removing
+-- corner vertices; this operation is fully faithful on path categories,
+-- as demonstrated by the author.
 
 module Math.Topology.CubeCmplx.CornerReduce (
 
@@ -41,7 +42,7 @@ import Control.Arrow ((***))
 import Math.Topology.CubeCmplx.DirCubeCmplx
 
 -- | Naive algorithm for finding corner vertices of a cubical complex. Works
---   well whenever the complex is small
+--   well whenever the complex has relatively few top-cells.
 cmplxCornersNaive :: CubeCmplx -> S.HashSet (Vertex, CubeCell)
 cmplxCornersNaive cx = S.fromList . map (\(v,(c,_)) -> (v,c)) . M.toList .
                        M.filter ((==1) . snd) $ 
@@ -51,7 +52,7 @@ cmplxCornersNaive cx = S.fromList . map (\(v,(c,_)) -> (v,c)) . M.toList .
 
 -- | Given a non-empty complex cx where all vertices have nonzero coordinates,
 --   provide a list of vertex spans that can be used to detect every corner 
---   vertex of cx
+--   vertex of cx.
 cmplxCovSpans :: CubeCmplx -> [VertSpan]
 cmplxCovSpans cx
    | cmplxNull cx = []
@@ -64,14 +65,14 @@ cmplxCovSpans cx
 
 -- | Given a cubical complex and a vertex span to which it belongs, determine
 --   the set of corner vertices that belong to the interior of the span using
---   the naive algorithm
+--   the naive algorithm.
 cmplxSpanIntCorners :: CubeCmplx -> VertSpan -> S.HashSet (Vertex, CubeCell)
 cmplxSpanIntCorners cx vs = S.filter (\(v,_) -> not $ (vertToCell v) `inBdry` vs) 
                                      (cmplxCornersNaive cx)
 
 -- | Memory-efficient parallelized algorithm for determining corner vertices of 
 --   any finite directed cubical complex whose vertices all have nonzero 
---   coordinates
+--   coordinates.
 cmplxCorners :: CubeCmplx -> S.HashSet (Vertex, CubeCell)
 cmplxCorners cx = S.unions . withStrategy (parBuffer 100 rdeepseq) . 
                   map (uncurry cmplxSpanIntCorners) $ 
@@ -79,7 +80,7 @@ cmplxCorners cx = S.unions . withStrategy (parBuffer 100 rdeepseq) .
 
 -- | Given a cubical complex where all vertices have nonzero coordinates, 
 --   determine the set of corner vertices that belong to the interior of the 
---   given span using the parallel algorithm
+--   given span using the parallel algorithm.
 cmplxCornersInt :: CubeCmplx -> VertSpan -> S.HashSet (Vertex, CubeCell)
 cmplxCornersInt cx vs 
    = S.filter (\(v,_) -> (v `vInSpan` vs) &&
@@ -98,7 +99,7 @@ cmplxCovHullUnsafe cx = vsUnsafe f' s'
 
 -- | Given a dimension n, get set of all subcomplexes Lx supported away
 --   from chosen vertices x in a generic n-cell, together with potential
---   new corner vertex for each potential new top-cell (memoized)
+--   new corner vertex for each potential new top-cell (memoized).
 genLx :: Int -> M.HashMap Vertex [(Vertex, CubeCell)]
 genLx n = gensLx !! n
 gensLx = map genLx' [0..] where 
@@ -126,7 +127,7 @@ cellLx c x = let cs = case M.lookup gx $ genLx (cellDim c) of
 -- | Given a cubical complex all of whose vertices have nonzero coordinates
 --   and a corner vertex/cell pair to delete, determine any new corner 
 --   vertex/cell pairs, any new top-cells that would be created, and any 
---   potential new top-cells that already were in the complex
+--   potential new top-cells that already were in the complex.
 cmplxCornerUpdate :: CubeCmplx -> (Vertex, CubeCell)   -- corner to process
                      -> (S.HashSet (Vertex, CubeCell), -- new corners
                          S.HashSet CubeCell,           -- new top-cells
@@ -175,7 +176,7 @@ cmplxCornersDelSerial vs (cx,xs) = S.foldr step (cx,xs') corners
 -- | Given a complex, a set of corner vertices, and a set of corner vertices
 --   to exclude from consideration, iteratively reduce the complex one corner
 --   vertex at a time until there are no known non-excluded corner vertices 
---   remaining 
+--   remaining.
 cmplxReduceSerial :: CubeCmplx -> S.HashSet (Vertex, CubeCell) -> [VertSpan] 
                      -> CubeCmplx
 cmplxReduceSerial cx xs vs
@@ -185,7 +186,7 @@ cmplxReduceSerial cx xs vs
 
 -- | Given a cubical complex all of whose vertices have nonzero coordiantes
 --   and a list of corner vertex/cell pairs to delete (one corner per cell), 
---   determine if these updates are parallelizable and describe the update 
+--   determine if these updates are parallelizable and describe the update.
 cmplxCornerUpdates :: 
    CubeCmplx -> [(Vertex, CubeCell)] -- list of corners to process
              -> Maybe (S.HashSet (Vertex, CubeCell), -- new corners
@@ -227,7 +228,7 @@ cmplxCornersDelPar frac vs (cx,xs)
 --   corner vertices, and a list of vertex spans to exclude from consideration, 
 --   iteratively reduce the complex until there are no known non-excluded 
 --   corner vertices remaining. Return the intermediate complexes/corners 
---   in a list
+--   in a list.
 cmplxReduce' :: Int -- ^ Try to remove every nth corner vertex on each round
                 -> CubeCmplx                    -- ^ Complex to reduce 
                 -> S.HashSet (Vertex, CubeCell) -- ^ Corner verts/cells
@@ -240,7 +241,7 @@ cmplxReduce' frac cx xs vs = iterate go (cx,xs,vs) where
 -- | Given a complex all of whose vertices have nonzero coordinates, a set of 
 --   corner vertices, and a list of vertex spans to exclude from consideration,
 --   iteratively reduce the complex until there are no known non-excluded 
---   corner vertices remaining 
+--   corner vertices remaining.
 cmplxReduce :: Int -- ^ Try to remove every nth corner vertex on each round
                -> CubeCmplx                    -- ^ Complex to reduce 
                -> S.HashSet (Vertex, CubeCell) -- ^ Corner verts/cells
@@ -252,7 +253,7 @@ cmplxReduce frac cx xs vs = (\(ncx,_,_) -> ncx) . fst . head .
    where rcx = cmplxReduce' frac cx xs vs
 
 -- | Given a vertex span, determine a disjoint union of vertex spans that cover
---   a substantial portion of this span
+--   a substantial portion of this span.
 disjointCov :: VertSpan -> [VertSpan]
 disjointCov vs = map (buildvs . transpose) . lazyProd . 
                  map f $ zip (vsFstList vs) (vsSndList vs) 
@@ -264,7 +265,7 @@ disjointCov vs = map (buildvs . transpose) . lazyProd .
 --   span, filter for those cells belonging to span, determine the corner 
 --   vertex/cell pairs interior to the span, and union with all cells
 --   adjacent to the boundary of the span. Represents a parallelizable
---   "subproblem" for reduction via corner vertices
+--   "subproblem" for reduction via corner vertices.
 rSubProb :: CubeCmplx -> VertSpan 
             -> (CubeCmplx, S.HashSet (Vertex, CubeCell), [VertSpan])
 rSubProb cx vs = (fatCmplx, corners, vsBdry vs)
@@ -278,14 +279,15 @@ rSubProb cx vs = (fatCmplx, corners, vsBdry vs)
 -- | Given a complex whose vertices have nonzero coordinates, determine a
 --   minimal vertex span containing it, find a disjoint union of vertex spans
 --   that almost cover this span, and use these to determine a list of
---   subcomplexes that can be reduced in parallel subject to boundary conditions
+--   subcomplexes that can be reduced in parallel subject to boundary
+--   conditions.
 rSubProbs :: CubeCmplx -> [(CubeCmplx, S.HashSet (Vertex, CubeCell), [VertSpan])]
 rSubProbs cx = map (rSubProb cx) . disjointCov . vsFatten . 
                cmplxHullUnsafe $ cx
 
 -- | Given a complex whose vertices have nonzero coordinates, reduce it in
 --   parallel, optionally excluding some spans from the set of corner vertices. 
---   Return the intermediate complexes in a list
+--   Return the intermediate complexes in a list.
 cmplxReducePar' :: CubeCmplx -> [VertSpan] -> [CubeCmplx]
 cmplxReducePar' cx vs = iterate go cx where 
    go cx' = serStep . parStep $ cx'

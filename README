@@ -3,7 +3,7 @@
 
 This package provides a library of functions for creating and manipulating
 finite directed cubical complexes, together with a module containing algorithms
-implementing the corner reduction techniques discovered by the author for
+implementing the corner reduction techniques invented by the author for
 simplifying these complexes. Further enhancements will be added as time permits.
 The underlying theory is described in the author's research article "Computing
 Path Categories of Finite Directed Cubical Complexes". 
