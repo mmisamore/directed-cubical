@@ -21,6 +21,10 @@ extra-source-files:  README,
                      Examples/twoTorus3d.hs,
                      Examples/swissFlag.hs
 
+source-repository head
+  type:     git 
+  location: https://github.com/mmisamore/directed-cubical 
+
 library
   exposed-modules:     Math.Topology.CubeCmplx.CornerReduce, 
                        Math.Topology.CubeCmplx.DirCubeCmplx
