@@ -605,7 +605,7 @@ oneTorus3d = (cx, [vsVert $ vertexUnsafe [1,1,1], vsVert $ vertexUnsafe [4,4,2]]
    where cx = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1,1] [4,4,2]) $
               S.fromList $ [cellUnsafe [2,2,1] [3,3,2]]
 
--- | Standard example: three classes of paths expected in path category.
+-- | Standard example: four classes of paths expected in path category.
 twoTorus3d :: (CubeCmplx, [VertSpan])
 twoTorus3d = (cx, [vsVert $ vertexUnsafe [1,1,1], vsVert $ vertexUnsafe [4,6,2]]) 
    where cx = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1,1] [4,6,2]) $
