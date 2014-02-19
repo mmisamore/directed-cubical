@@ -40,7 +40,7 @@ module Math.Topology.CubeCmplx.DirCubeCmplx (
    cmplxHullUnsafe, cmplxFilterSpan, cmplxFilterSpans, cellNhd,
 
    -- * Example complexes
-   swissFlag, sqPairFwd, sqPairBack, oneTorus3d, twoTorus3d,
+   swissFlag, sqPairFwd, sqPairBack, torus3d, genusTwo3d,
 
    -- * Utilities
    lazyProd
@@ -600,14 +600,14 @@ sqPairBack = (cx, [vsVert $ vertexUnsafe [1,1], vsVert $ vertexUnsafe [6,6]])
               S.fromList $ [cellUnsafe [2,4] [3,5], cellUnsafe [4,2] [5,3]]
 
 -- | Standard example: two classes of paths expected in path category.
-oneTorus3d :: (CubeCmplx, [VertSpan])
-oneTorus3d = (cx, [vsVert $ vertexUnsafe [1,1,1], vsVert $ vertexUnsafe [4,4,2]])
+torus3d :: (CubeCmplx, [VertSpan])
+torus3d = (cx, [vsVert $ vertexUnsafe [1,1,1], vsVert $ vertexUnsafe [4,4,2]])
    where cx = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1,1] [4,4,2]) $
               S.fromList $ [cellUnsafe [2,2,1] [3,3,2]]
 
 -- | Standard example: four classes of paths expected in path category.
-twoTorus3d :: (CubeCmplx, [VertSpan])
-twoTorus3d = (cx, [vsVert $ vertexUnsafe [1,1,1], vsVert $ vertexUnsafe [4,6,2]]) 
+genusTwo3d :: (CubeCmplx, [VertSpan])
+genusTwo3d = (cx, [vsVert $ vertexUnsafe [1,1,1], vsVert $ vertexUnsafe [4,6,2]]) 
    where cx = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1,1] [4,6,2]) $
               S.fromList $ [cellUnsafe [2,2,1] [3,3,2], 
                             cellUnsafe [2,4,1] [3,5,2]]

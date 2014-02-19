@@ -52,8 +52,8 @@ fuzz_cmplxReduce n    = map (flip cmplxReduce []) $
 eg_sqPairBack         = (S.size $ cells (uncurry cmplxReduce $ sqPairBack)) == 15
 eg_sqPairFwd          = (S.size $ cells (uncurry cmplxReduce $ sqPairFwd))  == 14
 eg_swissFlag          = (S.size $ cells (uncurry cmplxReduce $ swissFlag))  == 16
-eg_oneTorus3d         = (S.size $ cells (uncurry cmplxReduce $ oneTorus3d)) == 8
-eg_twoTorus3d         = (S.size $ cells (uncurry cmplxReduce $ twoTorus3d)) == 11
+eg_torus3d            = (S.size $ cells (uncurry cmplxReduce $ torus3d))    == 8
+eg_genusTwo3d         = (S.size $ cells (uncurry cmplxReduce $ genusTwo3d)) == 11
 
 --main = print $ fuzz_vsFatten 10
 
