@@ -69,8 +69,9 @@ import Data.Bits ((.&.), (.|.), xor)
 import Control.Parallel.Strategies 
    (rdeepseq, parBuffer, withStrategy, parList, dot, evalTuple3, r0)
 import Control.Arrow ((***))
-import Test.QuickCheck (Arbitrary, arbitrary, suchThat, 
-                        choose, vectorOf, resize) 
+import Test.QuickCheck (Arbitrary, arbitrary, suchThat, choose, vectorOf, 
+                        resize)
+
 
 -- Utilities --
 
@@ -94,16 +95,14 @@ bitFill v m f = V.accumulate (+) v $ V.zip maskIndices f
 -- | A generic notation for coordinate values.
 type T = Int8
 
--- | Random vectors.
-instance (Arbitrary a, V.Unbox a, Num a, Ord a) => Arbitrary (V.Vector a)
-   where arbitrary = do l  <- choose (1,7) 
-                        ts <- vectorOf l (arbitrary `suchThat` (>=0))
-                        return $ V.fromList ts 
-
 -- | A vertex with lexicographic ordering.
 data Vertex = Vertex { coords :: V.Vector T, _hash :: Int } deriving (Eq, Ord)
 instance Show Vertex where show v = show (V.toList $ coords v)
-instance Arbitrary Vertex where arbitrary = liftM vertexVectorUnsafe $ arbitrary
+instance Arbitrary Vertex 
+   where arbitrary = do l  <- choose (1,5) 
+                        ts <- vectorOf l (arbitrary `suchThat` 
+                                         (\t -> t >= 0 && t <= 63))
+                        return (vertexUnsafe ts)
 instance Hashable Vertex where hashWithSalt s v = s + (_hash v)
 instance NFData Vertex where rnf v = (rnf $ coords v) `seq` 
                                      (rnf $ _hash v)  `seq` () 
@@ -173,9 +172,9 @@ data VertSpan = VertSpan { vsFst :: !Vertex, vsSnd :: !Vertex }
    deriving (Show, Eq, Ord)
 instance NFData VertSpan
 instance Arbitrary VertSpan
-   where arbitrary = do v1 <- arbitrary
-                        v2 <- (resize 6 arbitrary) 
-                              `suchThat` ((== vDim v1) . vDim)
+   where arbitrary = do v1  <- arbitrary 
+                        v2  <- (resize 6 arbitrary) `suchThat` 
+                               ((== vDim v1).vDim)
                         return $ vsUnsafe v1 (v1 `vAdd` v2)
 
 -- | Safe constructor for vertex spans. Sanity checks for matching ambient
@@ -240,7 +239,7 @@ vsCornerPairs vs
                                                  (head cs)) coordSpans
          possCoords = zipWith (\l1 l2 -> [l1, reverse l2]) 
                       (map (take 2) coordRans) (map (take 2) coordRans') 
-         cells      = map (\[x,y] -> cellUnsafe x y) . map transpose $ 
+         cells      = map (\[x,y] -> cellUnsafe x y) .  map transpose $ 
                       lazyProd possCoords
          corners    = map vertexUnsafe . lazyProd $ 
                       map (\[x,y] -> [head x, last y]) possCoords
@@ -500,7 +499,7 @@ instance NFData CubeCmplx where rnf cx = rnf (cells cx)
 -- | A "random" cubical complex will be a vertex span with a random subset of
 --   top-cells removed. Not ideal since every cell will have the same dimension.
 instance Arbitrary CubeCmplx
-   where arbitrary = do vs <- arbitrary
+   where arbitrary = do vs <- arbitrary `suchThat` ((<= 3).vsDim)
                         let cx = vsCmplx vs
                         let cs = zip (cycle [1..100]) $ S.toList (cells cx)
                         return . CubeCmplx . S.fromList . map snd .
@@ -547,7 +546,7 @@ cmplxUnions = CubeCmplx . S.unions . map cells
 cmplxFilter :: (CubeCell -> Bool) -> CubeCmplx -> CubeCmplx
 cmplxFilter f cx = CubeCmplx . S.filter f $ cells cx
 
--- | Given a nonempty complex, determine the minimal vertex span containing it.
+-- | Given a non-empty complex, determine the minimal vertex span containing it.
 --   The resulting span need not have the same dimension as the ambient space.
 cmplxHullUnsafe :: CubeCmplx -> VertSpan
 cmplxHullUnsafe cx = vsUnsafe minv maxv

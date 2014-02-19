@@ -4,7 +4,7 @@ import Control.DeepSeq
 
 cx = vsCmplx $ vsCoordsUnsafe (replicate 3 1) (replicate 3 10)
 
-main = print $ cx `deepseq` cmplxReducePar cx 
+main = print $ cx `deepseq` cmplxReduce cx 
          [vsVert $ vertexUnsafe (replicate 3 1),
           vsVert $ vertexUnsafe (replicate 3 10)]
 
