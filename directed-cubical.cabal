@@ -17,8 +17,8 @@ extra-source-files:  README,
                      Examples/smallCube.hs,
                      Examples/sqPairFwd.hs,
                      Examples/sqPairBack.hs,
-                     Examples/oneTorus3d.hs,
-                     Examples/twoTorus3d.hs,
+                     Examples/torus3d.hs,
+                     Examples/genusTwo3d.hs,
                      Examples/swissFlag.hs
 
 source-repository head
