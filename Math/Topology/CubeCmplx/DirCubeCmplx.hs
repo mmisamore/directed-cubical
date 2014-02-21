@@ -24,7 +24,8 @@ module Math.Topology.CubeCmplx.DirCubeCmplx (
 
    -- * Cells
    CubeCell, minVert, maxVert, cell, cellUnsafe, cellDim, cellVertsUnsafe, 
-   cellVerts, spanTopCells, vertToCell, inSpan, vInSpan, inBdry, spanBdryCells,
+   cellVerts, spanTopCells, vertToCell, inSpan, isTopCell, vInSpan, inBdry, 
+   spanBdryCells,
 
    -- * Substructures
    nCubes, nCubeVerts, nCubeCells, nCubeProperCells, nCubeBdry, nCubeKSkels,
@@ -36,8 +37,8 @@ module Math.Topology.CubeCmplx.DirCubeCmplx (
 
    -- * Directed Cubical Complexes
    CubeCmplx, cells, cmplxEmpty, cmplxNull, cmplxSize, cmplxApply, vsCmplx, 
-   cmplxDelCell, cmplxDelCells, cmplxAddCells, cmplxUnions, cmplxFilter, 
-   cmplxHullUnsafe, cmplxFilterSpan, cmplxFilterSpans, cellNhd,
+   cmplxDelCell, cmplxDelCells, cmplxDelVsInt, cmplxAddCells, cmplxUnions, 
+   cmplxFilter, cmplxHullUnsafe, cmplxFilterSpan, cmplxFilterSpans, cellNhd,
 
    -- * Example complexes
    swissFlag, sqPairFwd, sqPairBack, torus3d, genusTwo3d,
@@ -50,6 +51,7 @@ module Math.Topology.CubeCmplx.DirCubeCmplx (
 import Data.Int      (Int8)
 import Data.Maybe    (fromJust)
 import Data.List     (transpose, groupBy, sortBy)
+import qualified Data.Foldable as F (all, any)
 import Data.Ord      (comparing)
 import Data.Function (on)
 import Control.Monad (liftM, guard)
@@ -332,6 +334,10 @@ vertToCell v = cellVertsUnsafe v v
 inSpan :: CubeCell -> VertSpan -> Bool
 inSpan c vs = (vsFst vs `vLT` minVert c) && (maxVert c `vLT` vsSnd vs)
 
+-- | Test whether a cubical cell would be a top-cell if added to a complex 
+isTopCell :: CubeCell -> CubeCmplx -> Bool
+isTopCell c cx = F.all (==False) . S.map (isPropSubCell c) $ cells cx
+
 -- | Test whether a vertex belongs to a given vertex span.
 vInSpan :: Vertex -> VertSpan -> Bool
 vInSpan v vs = (vertToCell v) `inSpan` vs
@@ -530,9 +536,22 @@ vsCmplx vs = CubeCmplx { cells = S.fromList $ spanTopCells vs }
 cmplxDelCell :: CubeCmplx -> CubeCell -> CubeCmplx
 cmplxDelCell cx c = CubeCmplx { cells = S.delete c (cells cx) }
 
--- | Given a list of cells to delete from a complex, delete them if present.
+-- | Given a set of cells to delete from a complex, delete them if present.
 cmplxDelCells :: CubeCmplx -> S.HashSet CubeCell -> CubeCmplx
 cmplxDelCells cx cs = CubeCmplx { cells = S.difference (cells cx) cs }
+
+-- | Given a vertex span and a complex, delete all top-cells belonging to the
+--   span and replace them with the boundaries of these top-cells that belong
+--   to the span's boundary. This "punches a hole" in the complex.
+cmplxDelVsInt :: CubeCmplx -> VertSpan -> CubeCmplx
+cmplxDelVsInt cx vs = cmplxAddCells delCmplx newCells
+   where delCells = cells . cmplxFilter (flip inSpan vs) $ cx
+         dbCells  = S.fromList . concatMap bdry . S.toList $ delCells
+         vbCells  = S.fromList . concat $ spanBdryCells vs  
+         potCells = S.filter (\c -> F.any (==True) . 
+                                    S.map (isSubCell c) $ vbCells) $ dbCells 
+         delCmplx = cmplxDelCells cx delCells
+         newCells = S.filter (flip isTopCell delCmplx) potCells 
 
 -- | Given a set of cells to insert into a complex, insert them all.
 cmplxAddCells :: CubeCmplx -> S.HashSet CubeCell -> CubeCmplx

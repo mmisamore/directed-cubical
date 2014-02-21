@@ -47,6 +47,9 @@ fuzz_cmplxReduce' n   = map (flip cmplxReduce' []) $
                               rList (arbitrary :: Gen CubeCmplx) n
 fuzz_cmplxReduce n    = map (flip cmplxReduce []) $ 
                               rList (arbitrary :: Gen CubeCmplx) n
+fuzz_cmplxDelVsInt n  = map (uncurry cmplxDelVsInt) $
+                           zip (rList (arbitrary :: Gen CubeCmplx) n)
+                               (rList (arbitrary :: Gen VertSpan) n)
 
 -- Example tests --
 eg_sqPairBack         = (S.size $ cells (uncurry cmplxReduce $ sqPairBack)) == 15
