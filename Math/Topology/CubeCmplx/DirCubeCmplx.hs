@@ -36,9 +36,10 @@ module Math.Topology.CubeCmplx.DirCubeCmplx (
    genToNonGen, nonGenToGen,
 
    -- * Directed Cubical Complexes
-   CubeCmplx, cells, cmplxEmpty, cmplxNull, cmplxSize, cmplxApply, vsCmplx, 
-   cmplxDelCell, cmplxDelCells, cmplxDelVsInt, cmplxAddCells, cmplxUnions, 
-   cmplxFilter, cmplxHullUnsafe, cmplxFilterSpan, cmplxFilterSpans, cellNhd,
+   CubeCmplx, cells, cmplxEmpty, cmplxNull, cmplxSize, cmplxApply, cmplxVertOp,
+   vsCmplx, cmplxDelCell, cmplxDelCells, cmplxDelVsInt, cmplxAddCells, 
+   cmplxUnions, cmplxFilter, cmplxHullUnsafe, cmplxFilterSpan, cmplxFilterSpans, 
+   cellNhd,
 
    -- * Example complexes
    swissFlag, sqPairFwd, sqPairBack, torus3d, genusTwo3d,
@@ -527,6 +528,15 @@ cmplxSize cx = S.size $ cells cx
 --   apply it to a cubical complex to yield a new complex.
 cmplxApply :: CubeCmplx -> (CubeCell -> S.HashSet CubeCell) -> CubeCmplx
 cmplxApply cx f = CubeCmplx . S.unions . map f . S.toList $ cells cx
+
+-- | Given a complex and a vertex of the same ambient dimension, translate 
+--   every cell of the complex by the vertex via the given operation. 
+--   Typical operation is to add (1,...,1) to force nonzero coordinates 
+--   without affecting the topology.
+cmplxVertOp :: CubeCmplx -> Vertex -> (Vertex -> Vertex -> Vertex) -> CubeCmplx
+cmplxVertOp cx v op 
+   = CubeCmplx . S.map (\c -> cellVertsUnsafe (minVert c `op` v) 
+                                              (maxVert c `op` v)) $ cells cx 
 
 -- | Basic means of constructing cubical complexes via vertex spans.
 vsCmplx :: VertSpan -> CubeCmplx

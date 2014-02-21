@@ -2,7 +2,9 @@
 
 import Math.Topology.CubeCmplx.DirCubeCmplx
 import Math.Topology.CubeCmplx.CornerReduce
+import Math.Topology.CubeCmplx.DPTrace
 import qualified Data.HashSet as S (size)
+import Data.Maybe (fromJust)
 import Test.QuickCheck
 import Test.QuickCheck.Gen (unGen, Gen)
 import System.Random (mkStdGen)
@@ -58,5 +60,8 @@ eg_swissFlag          = (S.size $ cells (uncurry cmplxReduce $ swissFlag))  == 1
 eg_torus3d            = (S.size $ cells (uncurry cmplxReduce $ torus3d))    == 8
 eg_genusTwo3d         = (S.size $ cells (uncurry cmplxReduce $ genusTwo3d)) == 11
 
---main = print $ fuzz_vsFatten 10
+-- Represent the classic swiss flag complex as a process trace problem
+eg_swissFlag_pt       = (fst $ swissFlag) ==
+                        ptsCmplx [fromJust $ pTrace 1 [(P,1),(P,2),(V,2),(V,1)],
+                                  fromJust $ pTrace 2 [(P,2),(P,1),(V,1),(V,2)]]
 
