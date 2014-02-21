@@ -90,12 +90,12 @@ pTrace id rs = do rss <- reqList rs
                   return $ PTrace id rss
 
 -- | Attempt to build list of process traces with default process IDs
--- | from list of lists of requests.
+--   from list of lists of requests.
 pTraces :: [[ResReq]] -> Maybe [PTrace]
 pTraces = sequence . map (uncurry pTrace) . zip [1..]
 
 -- | Given a process trace, output list of associated resource request points
--- | ordered by time.
+--   ordered by time.
 ptPts :: PTrace -> [ReqPt]
 ptPts pt = zipWith3 reqPt (repeat $ ptId pt) rs [1..]
    where rs  = reqs . ptReqs $ pt
@@ -202,7 +202,9 @@ ptsForbRegs pts = concatMap (rcVertSpans n) . resComps $ pts
    where n = vsDim $ ptsAmbReg pts
  
 -- | Given a list of process traces, represent the associated resource
---   contention problem by a finite directed cubical complex.
+--   contention problem by a finite directed cubical complex. The ordering
+--   of the coordinates is the same as the ordering of the processes in
+--   the list.
 ptsCmplx :: [PTrace] -> CubeCmplx
 ptsCmplx pts = cmplxVertOp cx (vertexUnsafe $ replicate (vsDim reg) 1) vAdd
    where reg = ptsAmbReg pts  

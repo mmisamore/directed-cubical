@@ -1,5 +1,5 @@
 name:                directed-cubical
-version:             0.1.0.0
+version:             0.1.1.0
 synopsis:            Finite Directed Cubical Complexes and associated algorithms
 description:         Finite Directed Cubical Complexes and associated algorithms
 license:             BSD3
@@ -27,7 +27,8 @@ source-repository head
 
 library
   exposed-modules:     Math.Topology.CubeCmplx.CornerReduce, 
-                       Math.Topology.CubeCmplx.DirCubeCmplx
+                       Math.Topology.CubeCmplx.DirCubeCmplx,
+                       Math.Topology.CubeCmplx.DPTrace
   -- other-modules:       
   build-depends:       base ==4.6.*, 
                        vector ==0.10.*, 
