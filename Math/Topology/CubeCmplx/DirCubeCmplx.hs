@@ -99,7 +99,8 @@ bitFill v m f = V.accumulate (+) v $ V.zip maskIndices f
 type T = Int8
 
 -- | A vertex with lexicographic ordering.
-data Vertex = Vertex { coords :: V.Vector T, _hash :: Int } deriving (Eq, Ord)
+data Vertex = Vertex { coords :: V.Vector T, -- ^ Coordinates as a vector.
+                       _hash :: Int } deriving (Eq, Ord)
 instance Show Vertex where show v = show (V.toList $ coords v)
 instance Arbitrary Vertex 
    where arbitrary = do l  <- choose (1,5) 
@@ -128,8 +129,8 @@ vertexVectorUnsafe v = Vertex { coords = v, _hash = hash $ V.toList v }
 vertexToList :: Vertex -> [T]
 vertexToList = V.toList . coords
 
---- | Combine two vertices coordinate-wise with a given operation,
---    with floor of 0 on each coordinate.
+-- | Combine two vertices coordinate-wise with a given operation,
+--   with floor of 0 on each coordinate.
 vertexPtWise :: (T -> T -> T) -> Vertex -> Vertex -> Vertex
 vertexPtWise f v1 v2 = vertexVectorUnsafe $
                        V.zipWith (\x y -> if (f x y) < 0 then 0 else f x y)
@@ -171,7 +172,9 @@ vDim = V.length . coords
 -- Vertex Spans defining sets of cubical cells --
 
 -- | A cubical vertex span.
-data VertSpan = VertSpan { vsFst :: !Vertex, vsSnd :: !Vertex } 
+data VertSpan = VertSpan { vsFst :: !Vertex,  -- ^ Minimum vertex for span.
+                           vsSnd :: !Vertex   -- ^ Maximum vertex for span.
+                         } 
    deriving (Show, Eq, Ord)
 instance NFData VertSpan
 instance Arbitrary VertSpan
@@ -500,7 +503,9 @@ opFaceUnsafe c f = let g = fromJust $ M.lookup f' (genOpFaces !! (cellDim c))
 -- Cubical Complexes --
 
 -- | A cubical complex consists of a set of top-cells.
-newtype CubeCmplx = CubeCmplx { cells :: S.HashSet CubeCell } deriving (Show,Eq)
+newtype CubeCmplx = 
+   CubeCmplx { cells :: S.HashSet CubeCell -- ^ Get set of top-cells of complex.
+             } deriving (Show,Eq)
 instance NFData CubeCmplx where rnf cx = rnf (cells cx)
 
 -- | A "random" cubical complex will be a vertex span with a random subset of
@@ -634,7 +639,7 @@ torus3d = (cx, [vsVert $ vertexUnsafe [1,1,1], vsVert $ vertexUnsafe [4,4,2]])
    where cx = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1,1] [4,4,2]) $
               S.fromList $ [cellUnsafe [2,2,1] [3,3,2]]
 
--- | Standard example: four classes of paths expected in path category.
+-- | Standard example: three classes of paths expected in path category.
 genusTwo3d :: (CubeCmplx, [VertSpan])
 genusTwo3d = (cx, [vsVert $ vertexUnsafe [1,1,1], vsVert $ vertexUnsafe [4,6,2]]) 
    where cx = cmplxDelCells (vsCmplx $ vsCoordsUnsafe [1,1,1] [4,6,2]) $
