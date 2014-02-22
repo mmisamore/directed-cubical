@@ -1,5 +1,5 @@
 name:                directed-cubical
-version:             0.1.1.0
+version:             0.1.1.1
 synopsis:            Finite directed cubical complexes and associated algorithms
 description:         Finite directed cubical complexes and associated algorithms
 license:             BSD3
