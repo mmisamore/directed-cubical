@@ -1,0 +1,22 @@
+<html>
+<head>
+<script type="text/javascript" src="http://get.goXTK.com/xtk.js"></script>
+<script type="text/javascript">
+
+window.onload = function() {
+   var r = new X.renderer3D();
+   r.init();
+
+   var torus = new X.mesh();
+   torus.file = 'testout.vtk';
+   r.add(torus);
+   r.camera.position = [0, 5, 0];
+   r.render();
+};
+
+</script>
+</head>
+<body bgcolor="black">
+</body>
+</html>
+

@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {-# LANGUAGE BangPatterns #-}
 
 -- | Module    :  Math.Topology.CubeCmplx.DirCubeCmplx
@@ -25,7 +24,7 @@ module Math.Topology.CubeCmplx.DirCubeCmplx (
    -- * Cells
    CubeCell, minVert, maxVert, cell, cellUnsafe, cellDim, cellVertsUnsafe, 
    cellVerts, spanTopCells, vertToCell, inSpan, isTopCell, vInSpan, inBdry, 
-   spanBdryCells,
+   spanBdryCells, 
 
    -- * Substructures
    nCubes, nCubeVerts, nCubeCells, nCubeProperCells, nCubeBdry, nCubeKSkels,
@@ -36,10 +35,10 @@ module Math.Topology.CubeCmplx.DirCubeCmplx (
    genToNonGen, nonGenToGen,
 
    -- * Directed Cubical Complexes
-   CubeCmplx, cells, cmplxEmpty, cmplxNull, cmplxSize, cmplxApply, cmplxVertOp,
-   vsCmplx, cmplxDelCell, cmplxDelCells, cmplxDelVsInt, cmplxAddCells, 
-   cmplxUnions, cmplxFilter, cmplxHullUnsafe, cmplxFilterSpan, cmplxFilterSpans, 
-   cellNhd,
+   CubeCmplx, cells, cmplxEmpty, cmplxNull, cmplxSize, cmplxApply, cmplxKSkel,
+   cmplx2Triang, cmplxVertOp, vsCmplx, cmplxDelCell, cmplxDelCells, 
+   cmplxDelVsInt, cmplxAddCells, cmplxUnions, cmplxFilter, cmplxHullUnsafe, 
+   cmplxFilterSpan, cmplxFilterSpans, cellNhd,
 
    -- * Example complexes
    swissFlag, sqPairFwd, sqPairBack, torus3d, genusTwo3d,
@@ -378,6 +377,16 @@ vsBdry vs = map (uncurry vsUnsafe) (fstSnd fst ++ fstSnd snd)
 spanBdryCells :: VertSpan -> [[CubeCell]]
 spanBdryCells = map spanTopCells . vsBdry
 
+-- | Given a cubical cell of dimension 2 or less, provide a list of lists of
+--   vertices giving its triangulation.
+cell2Triang :: CubeCell -> [[Vertex]]
+cell2Triang c = case cellDim c of
+                   0 -> [vs]
+                   1 -> [vs]
+                   2 -> [take 3 vs, drop 1 vs]
+                   _ -> [] 
+   where vs = verts c
+
 -- | List of all possible generic n-cubes, presented as cells (memoized).
 nCubes :: [CubeCell]
 nCubes = map gen [0..]
@@ -533,6 +542,17 @@ cmplxSize cx = S.size $ cells cx
 --   apply it to a cubical complex to yield a new complex.
 cmplxApply :: CubeCmplx -> (CubeCell -> S.HashSet CubeCell) -> CubeCmplx
 cmplxApply cx f = CubeCmplx . S.unions . map f . S.toList $ cells cx
+
+-- | Given a cubical complex and an integer k, determine the k-skeleton of
+--   the complex.
+cmplxKSkel :: CubeCmplx -> Int -> CubeCmplx
+cmplxKSkel cx k = cmplxApply cx (S.fromList . kSkel k) 
+
+-- | Given a cubical complex, provide a set of lists of vertices giving the
+--   triangulation of its 2-skeleton.
+cmplx2Triang :: CubeCmplx -> S.HashSet [Vertex]
+cmplx2Triang cx = S.fromList . concatMap cell2Triang . S.toList . cells $ 
+                  cmplxKSkel cx 2 
 
 -- | Given a complex and a vertex of the same ambient dimension, translate 
 --   every cell of the complex by the vertex via the given operation. 
