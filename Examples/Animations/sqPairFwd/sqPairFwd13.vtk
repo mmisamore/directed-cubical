@@ -1,0 +1,38 @@
+# vtk DataFile Version 2.0
+sqPairFwd13
+ASCII
+DATASET POLYDATA
+POINTS 14 float
+0 3 2
+0 3 3
+0 5 4
+0 5 5
+0 2 2
+0 2 3
+0 1 1
+0 2 1
+0 5 6
+0 6 6
+0 3 4
+0 4 4
+0 4 5
+0 4 6
+
+LINES 12 36
+2 0 1
+2 2 3
+2 4 5
+2 6 7
+2 7 4
+2 8 9
+2 10 11
+2 4 0
+2 5 1
+2 1 10
+2 11 12
+2 11 2
+
+POLYGONS 2 8
+3 12 3 13
+3 3 13 8
+

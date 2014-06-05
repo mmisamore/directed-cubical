@@ -7,17 +7,15 @@
 -- Stability   :  experimental 
 -- Portability :  portable
 --
--- Output finite directed cubical complexes in VTK polydata format
+-- Output finite directed cubical complexes in VTK polydata format.
 
-
--- 1. get all vertices
--- 2. assign labels to vertices in map
--- 3. generate list of polygons per vertex list via map
--- 4. assemble final data structure
--- 5. serialize to file
-
---module Math.Topology.CubeCmplx.Vtk (
--- ) where
+module Math.Topology.CubeCmplx.Vtk (
+   -- * Write to ByteString.
+   vtkPolyAscBS, vtkPolyAscBSs,
+   
+   -- * Write to file.
+   vtkPolyAscFile, vtkPolyAscFiles
+) where
 
 import Prelude hiding (lines)
 import Data.Ord (comparing)
@@ -38,7 +36,7 @@ instance Hashable VtkPoint where hashWithSalt s p = s + hash (getPt p)
 vtkPtVert :: Vertex -> VtkPoint
 vtkPtVert = VtkPoint . map fromEnum . vertexToList 
 
--- | Data type for VTK polygons.
+-- | Data type for VTK polygons (vertices, lines, simplices, etc.)
 newtype VtkPoly = VtkPoly { getPoly :: [Int] } deriving (Eq, Show)
 
 -- | Representation of the polydata format.
@@ -75,7 +73,7 @@ vtkPolyAsc p = BS.snoc (BS.pack . render $ p) '\n'
          len      = show (length $ getPoly p) ++ " "
 
 -- | Type for file titles.
-type Title = BS.ByteString
+type Title = String 
 
 -- | Representation of VTK polydata ascii file.
 data VtkPolyDataAscii = VtkPolyDataAscii { title     :: !Title, 
@@ -89,56 +87,51 @@ data VtkPolyDataAscii = VtkPolyDataAscii { title     :: !Title,
 -- | Given a VtkPolyData, marshall it to a VtkPolyDataAscii.
 vtkPolyDataAsc :: Title -> VtkPolyData -> VtkPolyDataAscii
 vtkPolyDataAsc t pd 
-   = VtkPolyDataAscii { title    = t,
-                        points   = (pmConv . pointmap $ pd),
-                        vertices = filter ((==1).length.getPoly) (polys pd),
-                        lines    = filter ((==2).length.getPoly) (polys pd),
-                        polygons = filter ((==3).length.getPoly) (polys pd) }
+   = VtkPolyDataAscii { title    = t, points   = pmConv . pointmap $ pd,
+                        vertices = v', lines   = l', polygons = p' }
    where pmConv :: M.HashMap Int VtkPoint -> [VtkPoint]
          pmConv m = map snd . sortBy (comparing fst) . M.toList $ m
+         (v',l',p') = foldr (\(len,e) (v,l,p) -> 
+                               case len of
+                                  1 -> (e:v,l,p)
+                                  2 -> (v,e:l,p)
+                                  3 -> (v,l,e:p)
+                                  _ -> (v,l,p)) ([],[],[]) lps 
+         lps = zip (map (length.getPoly) (polys pd)) (polys pd)
 
 -- | Marshall a VtkPolyDataAscii to a ByteString to write to a file.
 vtkPolyDataAscToBS :: VtkPolyDataAscii -> BS.ByteString
-vtkPolyDataAscToBS da = "# vtk DataFile Version 2.0\n" `BS.append`
-                        BS.snoc (title da) '\n' `BS.append`
-                        "ASCII\n" `BS.append`
-                        "DATASET POLYDATA\n" `BS.append`
-                        "POINTS " `BS.append` 
-                        (BS.pack . show . length $ points da) `BS.append`
-                        " float\n" `BS.append`
-                        BS.concat (map vtkPointAsc (points da)) `BS.append`
-                        "\n" `BS.append` 
-                        vertsOut `BS.append` linesOut `BS.append` polysOut
-   where vertLen   = length $ vertices da 
-         totalVLen = vertLen + (sum (map (length.getPoly) $ vertices da))
-         lineLen   = length $ lines da 
-         totalLLen = lineLen + (sum (map (length.getPoly) $ lines da))
-         polyLen   = length $ polygons da
-         totalPLen = polyLen + (sum (map (length.getPoly) $ polygons da))
+vtkPolyDataAscToBS da = BS.concat ["# vtk DataFile Version 2.0\n", 
+                        BS.snoc (BS.pack $ title da) '\n',
+                        "ASCII\n", "DATASET POLYDATA\n", "POINTS ",
+                        (BS.pack . show . length $ points da), " float\n",
+                        BS.concat (map vtkPointAsc (points da)), "\n",
+                        vertsOut, linesOut, polysOut]
+   where [vs, ls, ps] = [vertices da, lines da, polygons da] 
+         [vertLen, lineLen, polyLen] = [length $ vs, length $ ls, length $ ps]
+         totalVLen = vertLen + sum (map (length.getPoly) vs)
+         totalLLen = lineLen + sum (map (length.getPoly) ls)
+         totalPLen = polyLen + sum (map (length.getPoly) ps)
          vertsOut  = if vertLen > 0 then
-                        "VERTICES " `BS.append`
-                        (BS.pack . show $ vertLen) `BS.append` " " `BS.append`
-                        (BS.pack . show $ totalVLen) `BS.append` "\n" `BS.append`
-                        BS.concat (map vtkPolyAsc (vertices da)) `BS.append` "\n" 
+                        BS.concat ["VERTICES ", (BS.pack . show $ vertLen), 
+                        " ", (BS.pack . show $ totalVLen), "\n", 
+                        BS.concat (map vtkPolyAsc vs), "\n"]
                      else BS.empty
          linesOut  = if lineLen > 0 then
-                        "LINES " `BS.append`
-                        (BS.pack . show $ lineLen) `BS.append` " " `BS.append`
-                        (BS.pack . show $ totalLLen) `BS.append` "\n" `BS.append`
-                        BS.concat (map vtkPolyAsc (lines da)) `BS.append` "\n" 
+                        BS.concat ["LINES ", (BS.pack . show $ lineLen),
+                        " ", (BS.pack . show $ totalLLen), "\n",
+                        BS.concat (map vtkPolyAsc ls), "\n"]
                      else BS.empty
          polysOut  = if polyLen > 0 then                      
-                        "POLYGONS " `BS.append`
-                        (BS.pack . show $ polyLen) `BS.append` " " `BS.append`
-                        (BS.pack . show $ totalPLen) `BS.append` "\n" `BS.append`
-                        BS.concat (map vtkPolyAsc (polygons da)) `BS.append` "\n"
+                        BS.concat ["POLYGONS ", (BS.pack . show $ polyLen),
+                        " ", (BS.pack . show $ totalPLen), "\n",
+                        BS.concat (map vtkPolyAsc ps), "\n"]
                      else BS.empty
 
 -- | Given a cubical complex, take its 2-skeleton and render a VTK ascii file
 --   in polydata format that represents this complex.
-vtkPolyDataAscBS :: Title -> CubeCmplx -> BS.ByteString
-vtkPolyDataAscBS t cx = vtkPolyDataAscToBS $ 
-                        vtkPolyDataAsc t (vtkPolyData cx)  
+vtkPolyAscBS :: Title -> CubeCmplx -> BS.ByteString
+vtkPolyAscBS t cx = vtkPolyDataAscToBS $ vtkPolyDataAsc t (vtkPolyData cx)  
 
 -- | Type for filenames.
 type FileName = String
@@ -146,5 +139,18 @@ type FileName = String
 -- | Given a filename, title, and cubical complex, take the 2-skeleton, render
 --   to VTK polydata ascii format, and write to storage.
 vtkPolyAscFile :: FileName -> Title -> CubeCmplx -> IO ()
-vtkPolyAscFile f t cx = BS.writeFile f $ vtkPolyDataAscBS t cx
+vtkPolyAscFile f t cx = BS.writeFile f $ vtkPolyAscBS t cx
+
+-- | Given a base filename, base title, and list of cubical complexes, generate
+--   a list of named bytestrings of VTK ascii files associated to these
+--   complexes. Filenames and titles are appended with integers for 
+--   compatibility with tools like ParaView.
+vtkPolyAscBSs :: FileName -> Title -> [CubeCmplx] -> [(FileName, BS.ByteString)]
+vtkPolyAscBSs f t cxs = zip files $ map (uncurry vtkPolyAscBS) $ zip titles cxs 
+   where files  = map (++ ".vtk") $ zipWith (++) (repeat f) (map show [1..])
+         titles = zipWith (++) (repeat t) (map show [1..])
+
+-- | Same as vtkPolyAscBSs, but write the resulting files.
+vtkPolyAscFiles :: FileName -> Title -> [CubeCmplx] -> IO ()
+vtkPolyAscFiles f t cxs = mapM_ (uncurry BS.writeFile) $ vtkPolyAscBSs f t cxs
 

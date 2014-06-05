@@ -3,6 +3,7 @@
 import Math.Topology.CubeCmplx.DirCubeCmplx
 import Math.Topology.CubeCmplx.CornerReduce
 import Math.Topology.CubeCmplx.DPTrace
+import Math.Topology.CubeCmplx.Vtk
 import qualified Data.HashSet as S (size)
 import Data.Maybe (fromJust)
 import Test.QuickCheck
