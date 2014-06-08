@@ -1,5 +1,8 @@
 * 0.1.1.2 (2014-06-07)
   - Added preliminary support for VTK output in ascii polydata format.
+    Input is suitable for use (and has been used) with ParaView. XTK's parser
+	 seems to be incomplete at the moment, unfortunately. Otherwise
+	 visualizations could happen via WebGL.
   - Messed around with INLINE and -funbox-strict-fields a bit; no benefit
     realized.
 
