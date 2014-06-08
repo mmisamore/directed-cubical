@@ -1,5 +1,5 @@
 name:                directed-cubical
-version:             0.1.1.1
+version:             0.1.1.2
 synopsis:            Finite directed cubical complexes and associated algorithms
 description:         Finite directed cubical complexes and associated algorithms
 license:             BSD3
@@ -13,13 +13,12 @@ cabal-version:       >=1.8
 stability:           experimental
 extra-source-files:  README,
                      Tests.hs,
-                     Examples/bigCube.hs,
-                     Examples/smallCube.hs,
-                     Examples/sqPairFwd.hs,
-                     Examples/sqPairBack.hs,
-                     Examples/torus3d.hs,
-                     Examples/genusTwo3d.hs,
-                     Examples/swissFlag.hs
+                     Examples/*.hs,
+                     Examples/Animations/genusTwo3d/*.vtk,
+                     Examples/Animations/sqPairBack/*.vtk,
+                     Examples/Animations/sqPairFwd/*.vtk,
+                     Examples/Animations/swissFlag/*.vtk,
+                     Examples/Animations/torus3d/*.vtk
 
 source-repository head
   type:     git 
@@ -28,7 +27,8 @@ source-repository head
 library
   exposed-modules:     Math.Topology.CubeCmplx.CornerReduce, 
                        Math.Topology.CubeCmplx.DirCubeCmplx,
-                       Math.Topology.CubeCmplx.DPTrace
+                       Math.Topology.CubeCmplx.DPTrace,
+                       Math.Topology.CubeCmplx.Vtk
   -- other-modules:       
   build-depends:       base ==4.6.*, 
                        vector ==0.10.*, 
@@ -37,5 +37,6 @@ library
                        hashable ==1.2.*, 
                        deepseq ==1.3.*, 
                        QuickCheck ==2.6.*, 
-                       containers ==0.5.*
+                       containers ==0.5.*,
+                       bytestring ==0.10.*
 

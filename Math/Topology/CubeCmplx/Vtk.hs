@@ -10,11 +10,11 @@
 -- Output finite directed cubical complexes in VTK polydata format.
 
 module Math.Topology.CubeCmplx.Vtk (
-   -- * Write to ByteString.
-   vtkPolyAscBS, vtkPolyAscBSs,
+   -- * ByteString output
+   Title, vtkPolyAscBS, vtkPolyAscBSs,
    
-   -- * Write to file.
-   vtkPolyAscFile, vtkPolyAscFiles
+   -- * File output 
+   FileName, vtkPolyAscFile, vtkPolyAscFiles
 ) where
 
 import Prelude hiding (lines)
@@ -133,7 +133,7 @@ vtkPolyDataAscToBS da = BS.concat ["# vtk DataFile Version 2.0\n",
 vtkPolyAscBS :: Title -> CubeCmplx -> BS.ByteString
 vtkPolyAscBS t cx = vtkPolyDataAscToBS $ vtkPolyDataAsc t (vtkPolyData cx)  
 
--- | Type for filenames.
+-- | Type for file names.
 type FileName = String
 
 -- | Given a filename, title, and cubical complex, take the 2-skeleton, render

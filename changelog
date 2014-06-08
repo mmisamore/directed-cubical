@@ -1,0 +1,5 @@
+* 0.1.1.2 (2014-06-07)
+  - Added preliminary support for VTK output in ascii polydata format.
+  - Messed around with INLINE and -funbox-strict-fields a bit; no benefit
+    realized.
+
